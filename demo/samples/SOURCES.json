@@ -1,0 +1,28 @@
+{
+  "shapes.png": {
+    "source": "Project-authored geometric illustration",
+    "content": "red square, blue circle, green triangle",
+    "creation": "Pillow drawing; no evaluation-set image copied"
+  },
+  "speech.wav": {
+    "source": "Project-authored English script synthesized with Carnegie Mellon University's Flite kal16 voice",
+    "transcript": "The weather is sunny today. Let us take a walk in the park.",
+    "format": "PCM16, mono, 16000 Hz",
+    "upstream": "https://github.com/festvox/flite",
+    "notice": "../../LICENSES/Flite.txt",
+    "sha256": "4f25a54971dd21c28de415fab24b68e09083a22352ca0f3cbbdfa0d14d210c12"
+  },
+  "text": {
+    "source": "Project-authored Chinese question"
+  },
+  "first-red-square.png": {
+    "source": "Project-authored geometric test illustration, reused from authorized task media",
+    "content": "red square",
+    "creation": "Pillow drawing; no evaluation-set image copied"
+  },
+  "second-blue-circle.png": {
+    "source": "Project-authored geometric test illustration, reused from authorized task media",
+    "content": "blue circle",
+    "creation": "Pillow drawing; no evaluation-set image copied"
+  }
+}

@@ -1,0 +1,4 @@
+include lib/libqwen25_omni.so
+include lib/LICENSE
+recursive-include lib/qnn248 *
+include wheels/pandora_runtime-*.whl

@@ -1,0 +1,9 @@
+Qwen2.5-Omni-3B SDK — research and evaluation delivery.
+APLUX-authored application code, public C headers, Python binding and examples are designated Apache-2.0. APLUX proprietary contributions in the compiled core use the Pandora Model SDK terms only to the extent APLUX can grant those rights.
+Qwen is licensed under the Qwen RESEARCH LICENSE AGREEMENT, Copyright (c) Alibaba Cloud. All Rights Reserved. Model derivatives include trained rotations, quantization, fixed-shape compilation and encryption; model assets are delivered separately.
+Bundled OpenCV, nlohmann JSON, libpng, libjpeg-turbo and zlib retain their own licenses and notices, carried alongside this notice. The tokenizer includes Qualcomm's Genie C wrapper under applicable Qualcomm terms and Hugging Face Tokenizers under Apache-2.0. See Apache-2.0.txt and Tokenizer-Third-Party-Notices.txt in this directory.
+The SDK includes the Qualcomm QNN runtime and its vendor license and third-party notices in lib/qnn248/LICENSE.pdf and lib/qnn248/NOTICE.txt. Aidlux LMS, the driver, FastRPC and DSP firmware are device prerequisites with separate terms.
+
+This software is based in part on the work of the Independent JPEG Group.
+
+The SDK statically links OpenSSL (libcrypto), licensed under Apache-2.0. See OpenSSL-NOTICE.txt for copyright notices and Apache-2.0.txt for the license.

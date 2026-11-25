@@ -1,0 +1,4 @@
+./sdk/wheels/pandora_runtime-1.0.2-py3-none-linux_aarch64.whl
+./sdk
+-r demo/requirements.txt
+huggingface_hub>=1.0,<2

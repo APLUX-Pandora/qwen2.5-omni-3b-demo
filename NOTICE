@@ -1,0 +1,10 @@
+Qwen2.5-Omni-3B SDK — research and evaluation delivery.
+APLUX-authored application code, public C headers, Python binding and examples are designated Apache-2.0. APLUX proprietary contributions in the compiled core use the Pandora Model SDK terms only to the extent APLUX can grant those rights.
+Qwen is licensed under the Qwen RESEARCH LICENSE AGREEMENT, Copyright (c) Alibaba Cloud. All Rights Reserved. Model derivatives include trained rotations, quantization, fixed-shape compilation and encryption; model assets are delivered separately.
+Bundled OpenCV, nlohmann JSON, libpng, libjpeg-turbo and zlib retain their own licenses and notices, carried in sdk/python/pandora_qwen25_omni/LICENSES. The tokenizer includes Qualcomm's Genie C wrapper under applicable Qualcomm terms and Hugging Face Tokenizers under Apache-2.0. See sdk/python/pandora_qwen25_omni/LICENSES/Apache-2.0.txt and sdk/python/pandora_qwen25_omni/LICENSES/Tokenizer-Third-Party-Notices.txt.
+This software is based in part on the work of the Independent JPEG Group.
+The SDK includes the Qualcomm QNN runtime and its vendor notices in sdk/lib/qnn248. Aidlux LMS, the driver, FastRPC and DSP firmware are device prerequisites with separate terms.
+The example WAV uses a project-authored script and the Carnegie Mellon University Flite kal16 voice. The voice notice is in LICENSES/Flite.txt.
+The SDK statically links OpenSSL (libcrypto), licensed under Apache-2.0. See sdk/python/pandora_qwen25_omni/LICENSES/OpenSSL-NOTICE.txt for copyright notices and Apache-2.0.txt in the same directory for the license.
+The SDK ships the Pandora Runtime wheel with its Apache-2.0 license and notices.
+The Demo installs huggingface_hub separately. The Python SDK declares numpy, Pillow and soundfile as separately installed dependencies. These packages are distributed under their own terms.
