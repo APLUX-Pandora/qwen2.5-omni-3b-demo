@@ -3,8 +3,7 @@
 A local chat interface with text, up to eight images and one WAV per message and streamed text
 output. It includes durable conversation history, native KV snapshots, automatic
 context compaction, a circular context indicator, Chinese/English interface choice,
-media previews, Stop and expandable inference statistics. Microphone capture and
-speech output are outside this demo.
+media previews, microphone recording, Stop and expandable inference statistics.
 
 ## Run
 
@@ -20,6 +19,22 @@ The defaults are `.venv/bin/python`, `models/`, and `run/` in this checkout.
 Use `OMNI_PYTHON`, `OMNI_MODEL_DIR`, and `OMNI_RUN_DIR` to set alternate paths.
 Keep `run/history/` across restarts to reopen saved conversations.
 
+### Record with a microphone
+
+For a board address, serve HTTPS using a certificate trusted by the browser
+and valid for the address used to open the page:
+
+```sh
+sh demo/start.sh --port 7860 --tls-cert /path/to/certificate.pem --tls-key /path/to/key.pem
+```
+
+Open `https://<device-ip>:7860/`. Click the microphone by the composer, allow
+browser access, and speak during **Check microphone**. A usable input level
+enables **Start recording**. The microphone check measures sound locally.
+Recording stops after 20 seconds or when you press **Stop recording**. The
+page attaches a 16 kHz mono WAV. Preview it, remove it or record again before
+sending your message. Run the check again after changing microphones.
+
 ## Inputs and model behavior
 
 - Text: nonempty, up to 8,000 characters, subject to the selected target context budget (8192 physical / 8160 usable).
@@ -28,7 +43,7 @@ Keep `run/history/` across restarts to reopen saved conversations.
 - One active model operation globally; overlapping operations return HTTP 409.
 
 The presets are project-authored; provenance is in `samples/SOURCES.json`.
-Uploaded and preset WAVs can be played in the page. The Web Demo requests up to 256 new tokens with greedy decoding. The native SDK handles templates, prefix3, mRoPE, R1,
+Uploaded and preset WAVs can be played in the page. The Web Demo requests up to 1024 new tokens with greedy decoding. The native SDK handles templates, prefix3, mRoPE, R1,
 embeddings and model execution; generation uses the public LM v1 API. The service uses private SDK helpers for
 admission, snapshot persistence and diagnostics. These helpers are internal to
 this matching Demo/SDK.
@@ -72,7 +87,7 @@ empty conversation limit. Once deleted, it cannot be restored.
 The small circle in the input toolbar shows actual usage; hover or click for
 details. Logical history includes prefix3, template/media rows and pending EOS;
 effective KV is shown separately and AR128 padding is excluded. Each turn reserves
-256 output tokens. Before exceeding the selected target usable context budget, old turns are summarized and the two
+1024 output tokens. Before exceeding the selected target usable context budget, old turns are summarized and the two
 newest completed turns retain their raw token/media embeddings. Older media can
 only contribute facts retained in text; re-upload for new details.
 
@@ -112,7 +127,7 @@ count batch before consuming temporary uploads. History preserves all media IDs,
 and old single-attachment messages remain readable.
 
 The exact SDK token plan, not image count alone, controls context admission. Web
-reserves and requests 256 output tokens. At overflow it compacts older turns and
+reserves and requests 1024 output tokens. At overflow it compacts older turns and
 retains the latest two complete turns; if that still does not fit it rejects the
 input. Restoring and compacting show blocking status; sending, changing sessions,
 and changing attachments are disabled until completion.

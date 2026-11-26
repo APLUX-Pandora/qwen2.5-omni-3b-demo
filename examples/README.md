@@ -31,7 +31,6 @@ Example output:
 
 ```text
 我是来自阿里云的超大规模语言模型，我叫通义千问。
-finish_reason: stop
 ```
 
 ### image_chat.py
@@ -46,9 +45,7 @@ Example output:
 
 ```text
 Single image: 这个图形是红色的，形状是一个正方形。如果还有其他问题，欢迎随时问我。
-finish_reason: stop
 Two images: 第一张图片里是红色的正方形，第二张图片里是蓝色的圆形。如果还有啥疑问，尽管跟我说哈。
-finish_reason: stop
 ```
 
 ### audio_chat.py
@@ -59,7 +56,7 @@ Ask about the weather and suggested activity in the WAV recording.
 python examples/python/audio_chat.py
 ```
 
-The script prints its answer and the final generation status.
+The script prints its answer.
 
 ### image_audio_chat.py
 
@@ -69,7 +66,7 @@ Send two images, a WAV recording, and text in an ordered user message.
 python examples/python/image_audio_chat.py
 ```
 
-The script prints its answer and the final generation status.
+The script prints its answer.
 
 ### kv_cache_chat.py
 
@@ -84,7 +81,6 @@ Example output:
 ```text
 User: 我叫什么？
 Assistant: 你叫小秦。
-finish_reason: stop
 ```
 
 ## C example

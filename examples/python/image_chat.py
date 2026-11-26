@@ -17,9 +17,13 @@ with LanguageModel.from_pretrained(MODEL_DIR) as model:
             {"type": "text", "text": "请说出图片中图形的颜色和形状。"},
         ]},
     ]
-    result = model.generate(single_image, max_new_tokens=256, do_sample=False)
+    result = model.generate(
+        single_image,
+        max_new_tokens=1024,
+        do_sample=False,
+        repetition_penalty=1.0,
+    )
     print("Single image:", result.text)
-    print("finish_reason:", result.finish_reason)
 
     multiple_images = [
         {"role": "system", "content": SYSTEM},
@@ -29,6 +33,10 @@ with LanguageModel.from_pretrained(MODEL_DIR) as model:
             {"type": "text", "text": "请依次说出两张图片中图形的颜色和形状。"},
         ]},
     ]
-    result = model.generate(multiple_images, max_new_tokens=256, do_sample=False)
+    result = model.generate(
+        multiple_images,
+        max_new_tokens=1024,
+        do_sample=False,
+        repetition_penalty=1.0,
+    )
     print("Two images:", result.text)
-    print("finish_reason:", result.finish_reason)

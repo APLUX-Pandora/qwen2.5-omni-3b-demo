@@ -14,8 +14,13 @@ from pandora_qwen25_omni import LanguageModel
 
 with LanguageModel.from_pretrained("models") as model:
     messages = [{"role": "user", "content": "请用一句话介绍你自己。"}]
-    result = model.generate(messages, max_new_tokens=256, do_sample=False)
-    print(result.text, result.finish_reason)
+    result = model.generate(
+        messages,
+        max_new_tokens=1024,
+        do_sample=False,
+        repetition_penalty=1.0,
+    )
+    print(result.text)
 ```
 
 The import name is `pandora_qwen25_omni`. Text, local images and audio can be combined in
@@ -67,7 +72,7 @@ items containing `type` and its matching field.
 | --- | --- | --- |
 | `text` | String without template control markers such as `<|` | `{"type": "text", "text": "Describe both pictures."}` |
 | `image` | Local JPEG/PNG path as `str` or text-valued `os.PathLike` | `{"type": "image", "image": "demo/samples/first-red-square.png"}` |
-| `audio` | Local WAV path as `str` or text-valued `os.PathLike` | `{"type": "audio", "audio": "demo/samples/speech.wav"}` |
+| `audio` | Local WAV, FLAC, or MP3 path as `str` or text-valued `os.PathLike` | `{"type": "audio", "audio": "demo/samples/speech.wav"}` |
 
 Media belongs in user messages. Item order determines media placement. The SDK
 prepares inputs and decodes the generated answer. The bundled image/audio examples
@@ -81,12 +86,13 @@ and response-language preferences can be expressed in message text.
 - Images must be JPEG or PNG, at most 40 megapixels each. The model uses fixed
   image-size buckets. Per-request resizing or visual-token-budget controls are
   outside the public generation interface.
-- Audio must be mono 16 kHz WAV, PCM16 or float32, with 400–320000 finite samples
-  (0.025–20 seconds). Audio is accepted at its supplied rate and length.
+- Audio accepts WAV, FLAC, or MP3 files with 1–8 channels at 8–192 kHz.
+  The SDK downmixes and resamples to mono 16 kHz as needed. Duration must be
+  0.025–20 seconds. A conforming PCM16 or float32 WAV is used as supplied.
 - For the supplied model, usable context is 8160 tokens out of 8192 physical
   tokens. Input, media, history and reserved output share that budget.
   Over-budget requests fail. Media and history are preserved without implicit
-  truncation or resampling.
+  truncation.
 - Each call handles one conversation. Video, generated speech, remote media URLs
   and multi-sample batching are unsupported.
 
@@ -211,12 +217,13 @@ A short normal-streaming example keeps the model open until the stream closes:
 with LanguageModel.from_pretrained("models") as model:
     with model.generate_stream(
         [{"role": "user", "content": "Explain on-device AI briefly."}],
-        max_new_tokens=256,
+        max_new_tokens=1024,
+        do_sample=False,
+        repetition_penalty=1.0,
     ) as stream:
         for update in stream:
             print(update.delta, end="", flush=True)
-    result = stream.result
-    print(result.finish_reason)
+    print()
 ```
 
 For early exit, leave the stream context after the first nonempty increment:
@@ -225,7 +232,9 @@ For early exit, leave the stream context after the first nonempty increment:
 with LanguageModel.from_pretrained("models") as model:
     with model.generate_stream(
         [{"role": "user", "content": "Write a long story about a robot."}],
-        max_new_tokens=256,
+        max_new_tokens=1024,
+        do_sample=False,
+        repetition_penalty=1.0,
     ) as stream:
         for update in stream:
             print(update.delta, end="", flush=True)

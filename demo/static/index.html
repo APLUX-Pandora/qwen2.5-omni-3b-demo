@@ -6,6 +6,7 @@
   <link rel="icon" href="/static/pandora-mark.svg" type="image/svg+xml">
   <link rel="stylesheet" href="/static/style.css">
   <script src="/static/i18n.js" defer></script>
+  <script src="/static/microphone.js" defer></script>
   <script src="/static/app.js" defer></script>
 </head>
 <body>
@@ -14,6 +15,7 @@
     <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M12 19V5m-6 6 6-6 6 6"/></symbol>
     <symbol id="i-image" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="4"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m4 17 5-5 4 4 3-3 5 5"/></symbol>
     <symbol id="i-audio" viewBox="0 0 24 24"><path d="M4 10v4m4-8v12m4-15v18m4-15v12m4-8v4"/></symbol>
+    <symbol id="i-mic" viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="12" rx="3"/><path d="M5 11v1a7 7 0 0 0 14 0v-1m-7 8v3m-3 0h6"/></symbol>
     <symbol id="i-chat" viewBox="0 0 24 24"><path d="M20 11a8 8 0 0 1-8 8H4l1.5-4A8 8 0 1 1 20 11Z"/><path d="M8 9h8m-8 4h5"/></symbol>
     <symbol id="i-close" viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18"/></symbol>
     <symbol id="i-copy" viewBox="0 0 24 24"><rect x="8" y="8" width="12" height="13" rx="2"/><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"/></symbol>
@@ -53,6 +55,22 @@
       <div id="context-status" class="context-status" role="status" aria-live="polite" hidden></div>
       <div class="toast" id="toast" role="status" hidden></div>
       <form class="composer" id="composer">
+        <section class="microphone-panel" id="microphone-panel" aria-label="麦克风录音" hidden>
+          <div class="microphone-header">
+            <strong>麦克风录音</strong>
+            <button class="icon-button" id="microphone-close" type="button" aria-label="关闭麦克风面板"><svg aria-hidden="true"><use href="#i-close"/></svg></button>
+          </div>
+          <p id="microphone-status" role="status"></p>
+          <div class="microphone-monitor">
+            <meter id="microphone-level" min="0" max="1" value="0" aria-label="麦克风音量" hidden></meter>
+            <span id="microphone-time" hidden></span>
+          </div>
+          <div class="microphone-actions">
+            <button id="microphone-check" type="button">检查麦克风</button>
+            <button id="microphone-start" type="button" disabled>开始录音</button>
+            <button id="microphone-stop" type="button" hidden>停止录音</button>
+          </div>
+        </section>
         <div class="attachment" id="attachment" hidden></div>
         <label class="sr-only" for="prompt">输入问题</label>
         <textarea id="prompt" rows="1" placeholder="输入问题，或添加图片 / WAV 音频…" maxlength="8000"></textarea>
@@ -64,12 +82,13 @@
               <button id="choose-audio" type="button"><svg><use href="#i-audio"/></svg><span>上传 WAV 音频<small>16 kHz · 单声道 · 最长 20 秒</small></span></button>
             </div>
           </div>
+          <button class="icon-button" id="microphone-button" type="button" aria-label="麦克风录音" title="麦克风录音" aria-controls="microphone-panel" aria-expanded="false"><svg aria-hidden="true"><use href="#i-mic"/></svg></button>
           <span class="composer-hint" id="composer-hint">文字 · 图片 · WAV 音频</span>
           <details class="context-meter" id="context-meter">
             <summary id="context-trigger" aria-label="上下文用量 0%，0 / -- tokens" title="上下文已使用 0% · 0 / -- tokens">
               <svg class="context-ring" viewBox="0 0 24 24" aria-hidden="true"><circle class="context-track" cx="12" cy="12" r="8.5"/><circle id="context-progress" class="context-arc" cx="12" cy="12" r="8.5" pathLength="100" stroke-dasharray="0 100"/></svg>
             </summary>
-            <div class="context-popover"><strong id="context-label">上下文 0 / -- · 0%</strong><p id="context-details">回答预留 256 tokens；达到容量前自动整理较早对话。</p></div>
+            <div class="context-popover"><strong id="context-label">上下文 0 / -- · 0%</strong><p id="context-details">回答预留 1024 tokens；达到容量前自动整理较早对话。</p></div>
           </details>
           <button class="send-button" id="send" type="submit" aria-label="发送消息" disabled><svg><use href="#i-arrow"/></svg></button>
           <button class="send-button stop-button" id="stop" type="button" aria-label="停止生成" hidden><svg><use href="#i-stop"/></svg></button>

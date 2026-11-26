@@ -5,7 +5,7 @@ from ._api import (OmniError, InputError,
                   UnsupportedFeatureError, BusyError, ClosedError, InferenceError,
                   ResourceError, BackendError, InternalError)
 
-__version__ = "1.0.0"
+__version__ = "1.1.0"
 __all__ = ["LanguageModel", "DynamicCache", "GenerationResult", "GenerationUpdate",
            "Runtime", "CpuOptions", "QnnOptions", "OmniError", "InputError",
            "UnsupportedFeatureError", "BusyError", "ClosedError", "InferenceError",

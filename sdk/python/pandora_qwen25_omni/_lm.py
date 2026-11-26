@@ -1,5 +1,6 @@
 """Pandora LM v1 over the single native Qwen2.5-Omni C ABI."""
 from collections.abc import Mapping
+from contextlib import ExitStack
 from dataclasses import dataclass, field
 import math
 import os
@@ -8,7 +9,7 @@ import struct
 import threading
 
 from ._backend import (_Model as _NativeModel, BusyError, ClosedError, InputError,
-                  UnsupportedFeatureError, _freeze, _local_path)
+                  ResourceError, UnsupportedFeatureError, _freeze, _local_path)
 
 
 _STATISTIC_KEYS = (
@@ -157,7 +158,7 @@ class DynamicCache:
         self.close()
 
 
-def _messages(messages):
+def _messages(messages, audio_files):
     if not isinstance(messages, (list, tuple)) or not messages:
         raise InputError('messages must be a nonempty ordered sequence')
     result, expected = [], 'user'
@@ -190,23 +191,30 @@ def _messages(messages):
             else:
                 if role != 'user':
                     raise InputError('Media belongs in user messages')
-                value = _local_media(value, kind)
                 images += kind == 'image'
                 audios += kind == 'audio'
+                if images > 8 or audios > 1:
+                    raise InputError('At most eight images and one audio per user message')
             parts.append({'type': kind, kind: value})
-        if images > 8 or audios > 1:
-            raise InputError('At most eight images and one audio per user message')
+        # Check the message's media limits before opening or staging any files.
+        for part in parts:
+            kind = part['type']
+            if kind != 'text':
+                part[kind] = _local_media(part[kind], kind, audio_files)
         result.append(dict(role=role, content=parts))
     if result[-1]['role'] != 'user':
         raise InputError('Last message must be user')
     return result
 
 
-def _local_media(value, kind):
+def _local_media(value, kind, audio_files):
     value = _local_path(value, "media file")
     try:
         if not Path(value).is_file():
             raise InputError('Media file does not exist')
+        if kind == 'audio':
+            from ._media import _audio_path
+            return _audio_path(value, audio_files)
         if kind == 'image':
             from PIL import Image
             try:
@@ -222,11 +230,8 @@ def _local_media(value, kind):
                 if isinstance(error, InputError):
                     raise
                 raise InputError('Invalid image file') from error
-        else:
-            from ._media import _audio
-            _audio(value)  # Bounded WAV/finite-sample validation; native code prepares features.
     except (OSError, RuntimeError) as error:
-        if isinstance(error, (InputError, UnsupportedFeatureError)):
+        if isinstance(error, (InputError, UnsupportedFeatureError, ResourceError)):
             raise
         raise InputError('Invalid media file') from error
     return value
@@ -304,10 +309,10 @@ class LanguageModel:
     def generate_stream(self, messages, *, max_new_tokens=None, do_sample=None, temperature=None,
                         top_p=None, top_k=None, repetition_penalty=None, return_audio=False,
                         past_key_values=None):
-        with self._lock:
+        with self._lock, ExitStack() as audio_files:
             options = self._options(max_new_tokens, do_sample, temperature, top_p, top_k,
                                     repetition_penalty, return_audio)
-            messages = _messages(messages)
+            messages = _messages(messages, audio_files)
             cache = past_key_values
             if cache is not None and not isinstance(cache, DynamicCache):
                 raise InputError('Expected this SDK DynamicCache')
@@ -315,6 +320,7 @@ class LanguageModel:
                 raise InputError('Cached calls accept one user turn with an optional initial system')
             native = cache._acquire(self) if cache is not None else None
             try:
+                # Native request creation has already decoded the media when it returns.
                 stream = self._model.generate_stream(messages=messages, past_key_values=native, **options)
             except BaseException:
                 if cache is not None:
@@ -324,9 +330,9 @@ class LanguageModel:
 
     def count_tokens(self, messages, *, past_key_values=None, max_new_tokens=None):
         """Plan the token budget for a request without running inference or binding an empty cache."""
-        with self._lock:
+        with self._lock, ExitStack() as audio_files:
             self._options(max_new_tokens, None, None, None, None, None, False)
-            messages = _messages(messages)
+            messages = _messages(messages, audio_files)
             cache = past_key_values
             if cache is not None and not isinstance(cache, DynamicCache):
                 raise InputError('Expected this SDK DynamicCache')

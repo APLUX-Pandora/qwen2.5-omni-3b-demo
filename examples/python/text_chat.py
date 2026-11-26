@@ -5,6 +5,10 @@ MODEL_DIR = "models"
 QUESTION = "请用一句话介绍你自己。"
 
 with LanguageModel.from_pretrained(MODEL_DIR) as model:
-    result = model.generate([{"role": "user", "content": QUESTION}], max_new_tokens=256, do_sample=False)
+    result = model.generate(
+        [{"role": "user", "content": QUESTION}],
+        max_new_tokens=1024,
+        do_sample=False,
+        repetition_penalty=1.0,
+    )
     print(result.text)
-    print("finish_reason:", result.finish_reason)

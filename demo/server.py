@@ -17,7 +17,7 @@ from fastapi.staticfiles import StaticFiles
 import uvicorn
 
 from .media import MAX_UPLOAD, MediaError
-from .service import BASE, PRESETS, Busy, Engine
+from .service import BASE, PRESETS, RESPONSE_TOKEN_LIMIT, Busy, Engine
 
 LOG = logging.getLogger("omni.web")
 
@@ -99,7 +99,7 @@ def create_app(model_dir, run_dir):
         with engine.lock:
             busy = engine.active is not None or engine.operation is not None
             phase = engine.active.phase if engine.active else engine.operation or "idle"
-        return {"ready": not engine.closing, "busy": busy, "phase": phase, "model": "Qwen2.5-Omni-3B", "target": engine.model.capabilities["target"], "inputs": ["text", "image", "audio"], "output": "text", "max_images_per_message":engine.model.capabilities["max_images_per_message"],"max_audio_per_message":1,"response_token_limit":256,"context_capacity":engine.model.capabilities["context_capacity"],"context_usable_tokens":engine.model.capabilities["context_usable_tokens"]}
+        return {"ready": not engine.closing, "busy": busy, "phase": phase, "model": "Qwen2.5-Omni-3B", "target": engine.model.capabilities["target"], "inputs": ["text", "image", "audio"], "output": "text", "max_images_per_message":engine.model.capabilities["max_images_per_message"],"max_audio_per_message":1,"response_token_limit":RESPONSE_TOKEN_LIMIT,"context_capacity":engine.model.capabilities["context_capacity"],"context_usable_tokens":engine.model.capabilities["context_usable_tokens"]}
 
     @app.post("/api/sessions")
     async def create_session(request:Request):
@@ -219,7 +219,11 @@ def main():
     p.add_argument("--run-dir", required=True)
     p.add_argument("--host", default="0.0.0.0")
     p.add_argument("--port", type=int, default=7860)
+    p.add_argument("--tls-cert", help="HTTPS certificate PEM")
+    p.add_argument("--tls-key", help="HTTPS private key PEM")
     args = p.parse_args()
+    if bool(args.tls_cert) != bool(args.tls_key):
+        p.error("--tls-cert and --tls-key must be provided together")
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s %(message)s")
     app = create_app(args.model, args.run_dir)
 
@@ -232,7 +236,10 @@ def main():
                     await anyio.to_thread.run_sync(engine.quiesce)
             await super().shutdown(sockets=sockets)
 
-    server = OwnedServer(uvicorn.Config(app, host=args.host, port=args.port, workers=1, timeout_graceful_shutdown=5))
+    server = OwnedServer(uvicorn.Config(
+        app, host=args.host, port=args.port, workers=1, timeout_graceful_shutdown=5,
+        ssl_certfile=args.tls_cert, ssl_keyfile=args.tls_key,
+    ))
     # This CLI owns its process signal policy. A vendor's startup system() call
     # temporarily ignores SIGINT; a blocked signal remains available to sigwait.
     # The SDK itself never installs handlers or masks in embedding applications.

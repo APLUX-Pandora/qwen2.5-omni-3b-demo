@@ -6,7 +6,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-#define Q25O_SDK_VERSION "1.0.0"
+#define Q25O_SDK_VERSION "1.1.0"
 #define Q25O_ABI_VERSION 1u
 typedef uint64_t q25o_handle;
 typedef struct {uint32_t struct_size;uint32_t abi_version;const char* data;uint64_t size;} q25o_json_options;

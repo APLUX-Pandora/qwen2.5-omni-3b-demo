@@ -15,7 +15,7 @@ from .history import HistoryStore
 
 LOG = logging.getLogger("omni.web")
 SYSTEM = "You are Qwen, a virtual human developed by the Qwen Team, Alibaba Group, capable of perceiving auditory and visual inputs, as well as generating text and speech."
-RESPONSE_TOKEN_LIMIT = 256
+RESPONSE_TOKEN_LIMIT = 1024
 EMPTY_HISTORY_RETENTION_SECONDS = 24 * 60 * 60
 EMPTY_HISTORY_PER_OWNER_LIMIT = 16
 EMPTY_HISTORY_TOTAL_LIMIT = 256
@@ -103,6 +103,7 @@ class Job:
             messages,
             max_new_tokens=max_new_tokens,
             do_sample=False,
+            repetition_penalty=1.0,
             past_key_values=past_key_values,
         )
         with self.lock:

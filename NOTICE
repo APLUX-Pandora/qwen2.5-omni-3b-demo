@@ -7,4 +7,4 @@ The SDK includes the Qualcomm QNN runtime and its vendor notices in sdk/lib/qnn2
 The example WAV uses a project-authored script and the Carnegie Mellon University Flite kal16 voice. The voice notice is in LICENSES/Flite.txt.
 The SDK statically links OpenSSL (libcrypto), licensed under Apache-2.0. See sdk/python/pandora_qwen25_omni/LICENSES/OpenSSL-NOTICE.txt for copyright notices and Apache-2.0.txt in the same directory for the license.
 The SDK ships the Pandora Runtime wheel with its Apache-2.0 license and notices.
-The Demo installs huggingface_hub separately. The Python SDK declares numpy, Pillow and soundfile as separately installed dependencies. These packages are distributed under their own terms.
+The Demo installs huggingface_hub separately. The Python SDK declares numpy, Pillow, soundfile and soxr as separately installed dependencies. These packages are distributed under their own terms.

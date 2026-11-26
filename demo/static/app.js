@@ -29,7 +29,7 @@ function showContext(data) {
   $('#context-meter').dataset.level=percent>=85?'high':'normal';
   setUIAttribute($('#context-trigger'),'aria-label','上下文用量 '+Math.round(percent)+'%，'+used+' / '+cap+' tokens');
   setUIAttribute($('#context-trigger'),'title','上下文已使用 '+Math.round(percent)+'% · '+used.toLocaleString()+' / '+cap.toLocaleString()+' tokens');
-  setUIText($('#context-details'),'有效 KV '+(data.effective_kv_tokens || 0)+' tokens（媒体 '+(data.media_tokens || 0)+'）；待写入 EOS '+(data.pending_eos_tokens || 0)+'；回答预留 '+(data.reserved_output_tokens || 256)+' tokens。包含模板、prefix3 和媒体，不含 AR padding。已整理 '+(data.compressions || 0)+' 次。');
+  setUIText($('#context-details'),'有效 KV '+(data.effective_kv_tokens || 0)+' tokens（媒体 '+(data.media_tokens || 0)+'）；待写入 EOS '+(data.pending_eos_tokens || 0)+'；回答预留 '+(data.reserved_output_tokens || 1024)+' tokens。包含模板、prefix3 和媒体，不含 AR padding。已整理 '+(data.compressions || 0)+' 次。');
   if (data.new_prefill_tokens != null) setUIText($('#context-details'), (originalText.get($('#context-details').firstChild) || '')+' 本轮新增 '+data.new_prefill_tokens+'（媒体 '+data.media_tokens+'），输入后 '+data.next_input_tokens+'。');
   if (data.phase==='compressing') setCompression(true);
   else if (data.phase==='compressed') {
@@ -70,7 +70,8 @@ function clearView() {
   urls.forEach(url=>URL.revokeObjectURL(url));urls.clear();promptBox.value='';renderAttachment();resize();
 }
 async function restoreConversation(item) {
-  if(busy || restoring || compressing || externalBusy)return;
+  if(microphone.active() || busy || restoring || compressing || externalBusy)return;
+  microphone.close();
   busy=true;setRestoring(true);toast('');
   try {
     const data=await jsonResponse(await fetch('/api/sessions/'+item.id+'/restore',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({token:item.token})}));
@@ -93,7 +94,8 @@ async function restoreConversation(item) {
   finally{busy=false;setRestoring(false);controls();pollHealth();}
 }
 async function newConversation() {
-  if(busy || restoring || compressing || externalBusy)return;
+  if(microphone.active() || busy || restoring || compressing || externalBusy)return;
+  microphone.close();
   busy=true;controls();
   try {
     await ensureOwner();session=await jsonResponse(await fetch('/api/sessions',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({owner_token:ownerToken})}));
@@ -128,13 +130,15 @@ function icon(id) {
 }
 function toast(text) { setUIText($('#toast'),text); $('#toast').hidden = !text; }
 function controls() {
+  const recording = microphone.active();
+  $('#microphone-button').disabled = !recording && (busy || restoring || compressing || externalBusy || !ready);
   $('#send').hidden = busy && !restoring; $('#stop').hidden = !busy || restoring;
-  $('#send').disabled = busy || restoring || compressing || !ready || externalBusy || !promptBox.value.trim();
-  $('#new-chat').disabled = busy || restoring || compressing || externalBusy; $('#attach-button').disabled = busy || restoring || compressing || externalBusy || !ready;
-  $('#choose-image').disabled=busy || restoring || compressing || externalBusy; $('#choose-audio').disabled=busy || restoring || compressing || externalBusy;
+  $('#send').disabled = recording || busy || restoring || compressing || !ready || externalBusy || !promptBox.value.trim();
+  $('#new-chat').disabled = recording || busy || restoring || compressing || externalBusy; $('#attach-button').disabled = recording || busy || restoring || compressing || externalBusy || !ready;
+  $('#choose-image').disabled=recording || busy || restoring || compressing || externalBusy; $('#choose-audio').disabled=recording || busy || restoring || compressing || externalBusy;
   promptBox.disabled = busy || restoring || compressing || externalBusy;
-  document.querySelectorAll('[data-preset]').forEach(el => el.disabled = busy || restoring || compressing || !ready || externalBusy || !presets.length);
-  document.querySelectorAll('.history-item').forEach(el=>el.disabled=busy || restoring || compressing || externalBusy);
+  document.querySelectorAll('[data-preset]').forEach(el => el.disabled = recording || busy || restoring || compressing || !ready || externalBusy || !presets.length);
+  document.querySelectorAll('.history-item').forEach(el=>el.disabled=recording || busy || restoring || compressing || externalBusy);
   setUIText($('#composer-hint'),restoring ? '正在恢复对话，暂时无法对话' : compressing ? '正在整理上下文，暂时无法对话' : busy ? (activeJob ? '正在生成，可随时停止' : '正在准备输入…') : '文字 · 图片 · WAV 音频');
 }
 function resize() { promptBox.style.height = 'auto'; promptBox.style.height = Math.min(promptBox.scrollHeight, 145) + 'px'; }
@@ -169,7 +173,11 @@ function discardAttachments() {
   attachments=[];
 }
 function chooseFiles(files,expected=null) {
-  if(busy||restoring||compressing||externalBusy||!files.length)return;
+  if(microphone.active()||busy||restoring||compressing||externalBusy)return;
+  return addFiles(files, expected);
+}
+function addFiles(files, expected) {
+  if (!files.length) return;
   toast('');const next=[];
   for(const file of files){
     const kind=expected || (/\.wav$/i.test(file.name)?'audio':'image');
@@ -183,6 +191,7 @@ function chooseFiles(files,expected=null) {
   attachments.sort((a,b)=>(a.kind!=='image')-(b.kind!=='image'));
   if(!promptBox.value.trim())promptBox.value=attachments.some(x=>x.kind==='image')?'请按顺序描述这些图片。':'请转写音频中的语音，只输出转写结果。';
   renderAttachment();resize();controls();promptBox.focus();
+  return true;
 }
 function addUser(text,items=[]) {
   const row=document.createElement('article');row.className='message user';setUIAttribute(row,'aria-label','你的消息');
@@ -227,7 +236,8 @@ function finishView(view, data, firstMs) {
   }
 }
 async function send(presetID = null) {
-  if (busy || restoring || compressing || !ready || externalBusy || !promptBox.value.trim()) return;
+  if (microphone.active() || busy || restoring || compressing || !ready || externalBusy || !promptBox.value.trim()) return;
+  microphone.close();
   const text = promptBox.value.trim(), items = [...attachments];
   let view = null, receivedTerminal = false, firstMs = null, uploaded = [];
   busy = true; activeJob = null; $('#stop').disabled = true; controls(); toast('');
@@ -334,6 +344,33 @@ promptBox.addEventListener('input', () => { resize(); controls(); });
 promptBox.addEventListener('keydown', event => { if (event.key === 'Enter' && !event.shiftKey && !event.isComposing && event.keyCode !== 229) { event.preventDefault(); send(); } });
 $('#stop').addEventListener('click', stop);
 $('#new-chat').addEventListener('click',newConversation);
+const microphoneRecordings = new WeakSet();
+function canRecord() {
+  if (busy || restoring || compressing || externalBusy) {
+    toast(errors.busy);
+    return false;
+  }
+  if (attachments.some(item => item.kind === 'audio' && !microphoneRecordings.has(item.file))) {
+    toast(errors.media_count);
+    return false;
+  }
+  return true;
+}
+
+function attachRecording(file) {
+  // Keep the completed local recording even if another tab is using the model.
+  const previous = attachments.findIndex(item => microphoneRecordings.has(item.file));
+  if (previous !== -1) {
+    URL.revokeObjectURL(attachments[previous].url);
+    urls.delete(attachments[previous].url);
+    attachments.splice(previous, 1);
+  }
+  if (!addFiles([file], 'audio')) return false;
+  microphoneRecordings.add(file);
+  return true;
+}
+
+const microphone = mountMicrophone({attach: attachRecording, canRecord, onChange: controls});
 $('#attach-button').addEventListener('click', () => { $('#attach-menu').hidden = !$('#attach-menu').hidden; $('#attach-button').setAttribute('aria-expanded', String(!$('#attach-menu').hidden)); });
 document.addEventListener('click', event => { if (!event.target.closest('#context-meter')) $('#context-meter').open=false; if (!event.target.closest('.attach-wrap')) { $('#attach-menu').hidden = true; $('#attach-button').setAttribute('aria-expanded', 'false'); } });
 $('#choose-image').addEventListener('click', () => { $('#attach-menu').hidden = true; $('#image-file').click(); });
@@ -341,7 +378,8 @@ $('#choose-audio').addEventListener('click', () => { $('#attach-menu').hidden = 
 $('#image-file').addEventListener('change', event => { chooseFiles([...event.target.files], 'image'); event.target.value = ''; });
 $('#audio-file').addEventListener('change', event => { chooseFiles([...event.target.files], 'audio'); event.target.value = ''; });
 document.querySelectorAll('[data-preset]').forEach(button => button.addEventListener('click', () => {
-  if (busy || restoring || compressing || externalBusy) return; const spec = presets.find(p => p.id === button.dataset.preset); if (!spec) return;
+  if (microphone.active() || busy || restoring || compressing || externalBusy) return; const spec = presets.find(p => p.id === button.dataset.preset); if (!spec) return;
+  microphone.close();
   discardAttachments(); promptBox.value = spec.prompt; if (spec.asset) attachments = [{kind: spec.kind, preset: spec.id, url: spec.asset, name: spec.filename}]; renderAttachment(); resize(); send(spec.id);
 }));
 ['dragenter', 'dragover'].forEach(name => document.addEventListener(name, event => { event.preventDefault(); if (!busy) document.body.classList.add('drop-target'); }));

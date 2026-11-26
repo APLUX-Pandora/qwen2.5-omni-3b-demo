@@ -29,11 +29,16 @@ from pandora_qwen25_omni import LanguageModel
 
 with LanguageModel.from_pretrained("models") as model:
     messages = [{"role": "user", "content": "请用一句话介绍你自己。"}]
-    result = model.generate(messages, max_new_tokens=256, do_sample=False)
-    print(result.text, result.finish_reason)
+    result = model.generate(
+        messages,
+        max_new_tokens=1024,
+        do_sample=False,
+        repetition_penalty=1.0,
+    )
+    print(result.text)
 ```
 
-The Demo requests up to 256 new tokens with greedy decoding. See the Python API reference for the SDK defaults.
+The Demo requests up to 1024 new tokens with greedy decoding. See the Python API reference for the SDK defaults.
 
 ## Documentation
 

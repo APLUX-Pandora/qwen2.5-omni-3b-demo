@@ -67,7 +67,7 @@ hf download APLUX-Pandora/Qwen2.5-Omni-3B --local-dir models --include "targets/
 sh demo/start.sh --port 7860
 ```
 
-Open `http://<device-ip>:7860/` and send text or attach images or a WAV recording. Stop it with `Ctrl+C`. See the [Web Demo guide](demo/README.md).
+Open `http://<device-ip>:7860/` and send text or attach images or a WAV recording. Stop it with `Ctrl+C`. To record from a microphone, use [HTTPS and the microphone check](demo/README.md#record-with-a-microphone).
 
 ## 4. Python Usage
 
@@ -78,11 +78,16 @@ from pandora_qwen25_omni import LanguageModel
 
 with LanguageModel.from_pretrained("models") as model:
     messages = [{"role": "user", "content": "请用一句话介绍你自己。"}]
-    result = model.generate(messages, max_new_tokens=256, do_sample=False)
-    print(result.text, result.finish_reason)
+    result = model.generate(
+        messages,
+        max_new_tokens=1024,
+        do_sample=False,
+        repetition_penalty=1.0,
+    )
+    print(result.text)
 ```
 
-The Demo requests up to 256 new tokens with greedy decoding. See the Python API reference for the SDK defaults.
+The Demo requests up to 1024 new tokens with greedy decoding. See the Python API reference for the SDK defaults.
 
 Run the text example from the repository root:
 
