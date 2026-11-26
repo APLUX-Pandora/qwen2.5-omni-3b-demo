@@ -9,7 +9,11 @@ Chat with Qwen2.5-Omni-3B on a compatible device using text, images, or audio an
 
 Based on [Qwen2.5-Omni-3B](https://huggingface.co/Qwen/Qwen2.5-Omni-3B).
 
-**Demo recording:** reserved for a post-release recording.
+**Demo recording**
+
+https://github.com/user-attachments/assets/2eee1b22-95d4-4225-8053-d9cce4e6c598
+
+English walkthrough on QCS8550 (46 seconds). The demo answers a text prompt, describes an image, then previews and transcribes a spoken English clip.
 
 ## 1. Install
 
